@@ -1,0 +1,53 @@
+CREATE DATABASE library;
+
+CREATE TABLE books(
+	isbn char(13),
+	title varchar(50),
+	genre varchar(50),
+	publisher varchar(50),
+	year date,
+	PRIMARY KEY (isbn));
+
+CREATE TABLE written_by(
+	isbn char(13),
+	author_id int);
+
+CREATE TABLE authors(
+	id int AUTO_INCREMENT,
+	name varchar(50),
+	last_name varchar(50),
+	PRIMARY KEY (id));
+
+CREATE TABLE copies(
+	call_number int,
+	isbn char(13),
+	state varchar(50),
+	PRIMARY KEY (call_number));
+
+CREATE TABLE borrow(
+	id int AUTO_INCREMENT,
+	copy_id int,
+	date date,
+	login varchar(20),
+	PRIMARY KEY (id));
+
+CREATE TABLE reservations(
+	id int AUTO_INCREMENT,
+	date date,
+	login varchar(20),
+	PRIMARY KEY (id));
+
+CREATE TABLE users(
+	login varchar(20),
+	name varchar(50),
+	last_name varchar(50),
+	pass char(32),
+	permissions enum('Client', 'Librarian', 'Admin'),
+	PRIMARY KEY (login));
+
+CREATE USER 'Client'@'localhost' IDENTIFIED BY 'haslo1';
+CREATE USER 'Librarian'@'localhost' IDENTIFIED BY 'haslo2';
+CREATE USER 'Admin'@'localhost' IDENTIFIED BY 'haslo3';
+
+
+
