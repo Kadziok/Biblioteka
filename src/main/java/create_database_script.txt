@@ -49,5 +49,7 @@ CREATE USER 'Client'@'localhost' IDENTIFIED BY 'haslo1';
 CREATE USER 'Librarian'@'localhost' IDENTIFIED BY 'haslo2';
 CREATE USER 'Admin'@'localhost' IDENTIFIED BY 'haslo3';
 
+GRANT Select, Insert on library.* to 'Client'@'localhost';
 
+insert into users (login, name, last_name, pass, permissions) values ('john1', 'John', 'Doe', md5('pass'), 'Client');
 

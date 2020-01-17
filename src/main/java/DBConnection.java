@@ -5,7 +5,7 @@ public class DBConnection {
 
     private DBConnection(){};
 
-    public static void initConnection(String user, String pass){
+    public static void init(String user, String pass){
         try{
             con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/library?" +
@@ -18,7 +18,7 @@ public class DBConnection {
         }
     }
 
-    public static void closeConnection(){
+    public static void close(){
         if(con != null) {
             try {
                 con.close();
@@ -29,7 +29,7 @@ public class DBConnection {
         }
     }
 
-    public static Connection getConnection(){
+    public static Connection get(){
         return con;
     }
 }
