@@ -10,6 +10,65 @@ import java.awt.event.*;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import java.awt.Label;
+import javax.swing.JTable;
+import javax.swing.table.TableModel;
+import javax.swing.JScrollPane;
+import javax.swing.table.DefaultTableModel;
+import java.awt.BorderLayout;
+
+class Borrow extends JDialog
+{
+	Borrow()
+	{
+		
+	}
+}
+
+class Search extends JDialog
+{
+	JTable table;
+	Button search_button, exit_button;
+	DefaultTableModel model;
+	JTextField search_input;
+	Button exit;
+	JScrollPane scroll_pane;
+	Panel main_panel, secondary_panel;
+	
+	Search()
+	{
+		exit_button = new Button();
+		scroll_pane = new JScrollPane();
+		main_panel = new Panel();
+		main_panel.setLayout(new BorderLayout());
+
+		String[] columns = {"ISBN", "Tytuł", "Gatunek", "Wydawca", "Rok"};
+
+		model = new DefaultTableModel();
+		for(String s: columns)
+			{
+				model.addColumn(s);
+			}
+		table = new JTable(model);
+		scroll_pane.add(table);
+		main_panel.add(scroll_pane, BorderLayout.CENTER);
+		secondary_panel = new Panel();
+		search_button = new Button("Wyszukaj");
+		search_input = new JTextField(40);
+		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
+		secondary_panel.add(search_input);
+		secondary_panel.add(search_button);
+		secondary_panel.add(exit_button);
+		main_panel.add(secondary_panel, BorderLayout.PAGE_END);
+		add(main_panel);
+
+		pack();
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setTitle("Wyszukiwanie");
+		setSize(800, 600);
+		setResizable(false);
+		setVisible(true);
+	}
+}
 
 class Add_client extends JDialog
 {
@@ -90,7 +149,7 @@ class Add_client extends JDialog
 		pack();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle("Dodawanie klienta");
-		setSize(800,600);
+		setSize(800, 600);
 		setVisible(true);
 		setResizable(false);
 	}
@@ -110,7 +169,6 @@ class LibrarianGUI extends JFrame
 
 		search = new Button("Wyszukaj");
 		add_client = new Button("Dodaj użytkownika");
-		edit_state = new Button("Jakas nazwa");
 		check_in = new Button("Jakas nazwa");
 		check_out = new Button("Jakas nazwa");
 
@@ -119,23 +177,7 @@ class LibrarianGUI extends JFrame
 								 {
 									 public void actionPerformed(ActionEvent event)
 									 {
-										 System.out.println("Derpy");
-									 }
-								 });
-		edit_state.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 System.out.println("Derpy");
-									 }
-								 });
-		check_out.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 System.out.println("Derpy");
+										 JDialog search = new Search();
 									 }
 								 });
 		check_in.addActionListener(
@@ -143,7 +185,7 @@ class LibrarianGUI extends JFrame
 								 {
 									 public void actionPerformed(ActionEvent event)
 									 {
-										 System.out.println("Derpy");
+										 JDialog borrow = new Borrow();
 									 }
 								 });
 		add_client.addActionListener(
@@ -158,10 +200,8 @@ class LibrarianGUI extends JFrame
 		
 		main_panel.add(search);
 		main_panel.add(add_client);
-		main_panel.add(edit_state);
 		main_panel.add(check_in);
-		main_panel.add(check_out);
-
+		
 		add(main_panel);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setBounds(100, 100, 800, 600);
@@ -171,6 +211,11 @@ class LibrarianGUI extends JFrame
 	static void add_client()
 	{
 		System.out.println("Tutaj dodasz klienta");
+	}
+	
+	static void check_out()
+	{
+		
 	}
 }
 
