@@ -32,7 +32,7 @@ CREATE TABLE borrow(
 	PRIMARY KEY (id));
 
 CREATE TABLE reservations(
-	id int AUTO_INCREMENT,
+	id int,
 	date date,
 	login varchar(20),
 	PRIMARY KEY (id));
