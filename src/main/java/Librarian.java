@@ -15,12 +15,29 @@ import javax.swing.table.TableModel;
 import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
+import java.awt.ScrollPane;
 
 class Borrow extends JDialog
 {
+	JTable table;
+	JScrollPane scroll_pane;
+	Panel main_panel, secondary_panel, input_panel;
+	Button check_out, add_book, remove_book, exit;
+	JTextField isbn_input;
+	Label isbn_label;
 	Borrow()
 	{
-		
+		main_panel = new Panel();
+
+
+		add(main_panel);
+
+		pack();
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setTitle("Wypożyczanie");
+		setSize(800, 600);
+		setResizable(false);
+		setVisible(true);
 	}
 }
 
@@ -30,26 +47,21 @@ class Search extends JDialog
 	Button search_button, exit_button;
 	DefaultTableModel model;
 	JTextField search_input;
-	Button exit;
 	JScrollPane scroll_pane;
 	Panel main_panel, secondary_panel;
-	
+
 	Search()
 	{
-		exit_button = new Button();
+		exit_button = new Button("Wyjdź");
 		scroll_pane = new JScrollPane();
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
 
 		String[] columns = {"ISBN", "Tytuł", "Gatunek", "Wydawca", "Rok"};
 
-		model = new DefaultTableModel();
-		for(String s: columns)
-			{
-				model.addColumn(s);
-			}
+		model = new DefaultTableModel(columns, 0);
 		table = new JTable(model);
-		scroll_pane.add(table);
+		scroll_pane.setViewportView(table);
 		main_panel.add(scroll_pane, BorderLayout.CENTER);
 		secondary_panel = new Panel();
 		search_button = new Button("Wyszukaj");
@@ -61,12 +73,35 @@ class Search extends JDialog
 		main_panel.add(secondary_panel, BorderLayout.PAGE_END);
 		add(main_panel);
 
+		exit_button.addActionListener(
+								 new ActionListener()
+								 {
+									 public void actionPerformed(ActionEvent event)
+									 {
+										 dispose();
+									 }
+								 });
+		search_button.addActionListener(
+								 new ActionListener()
+								 {
+									 public void actionPerformed(ActionEvent event)
+									 {
+										 search();
+									 }
+								 });
+
+		
 		pack();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle("Wyszukiwanie");
 		setSize(800, 600);
 		setResizable(false);
 		setVisible(true);
+	}
+
+	void search()
+	{
+		System.out.println("Tu bedzie search");
 	}
 }
 
