@@ -21,15 +21,43 @@ class Borrow extends JDialog
 {
 	JTable table;
 	JScrollPane scroll_pane;
+	DefaultTableModel model;
 	Panel main_panel, secondary_panel, input_panel;
 	Button check_out, add_book, remove_book, exit;
 	JTextField isbn_input;
-	Label isbn_label;
+	Label isbn_label, info;
 	Borrow()
 	{
 		main_panel = new Panel();
+		main_panel.setLayout(new BorderLayout());
+		isbn_label = new Label("Podaj id egzemplarza");
+		isbn_input = new JTextField();
+		input_panel = new Panel();
+		input_panel.setLayout(new BoxLayout(input_panel, BoxLayout.LINE_AXIS));
+		input_panel.add(isbn_label);
+		input_panel.add(isbn_input);
+		
+		secondary_panel = new Panel();
+		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
+		check_out = new Button("Wypożycz");
+	  	add_book = new Button("Dodaj książkę");
+		remove_book = new Button("Usuń książkę");
+		exit = new Button("Wyjdź");
+		
+		secondary_panel.add(input_panel);
+		secondary_panel.add(check_out);
+		secondary_panel.add(add_book);
+		secondary_panel.add(remove_book);
+		secondary_panel.add(exit);
 
-
+		String[] columns = {"Id książki"};
+		model = new DefaultTableModel(columns, 0);
+		table = new JTable(model);
+		
+		scroll_pane = new JScrollPane();
+		scroll_pane.setViewportView(table);
+		main_panel.add(scroll_pane, BorderLayout.LINE_START);
+		main_panel.add(secondary_panel, BorderLayout.CENTER);
 		add(main_panel);
 
 		pack();
@@ -86,7 +114,7 @@ class Search extends JDialog
 								 {
 									 public void actionPerformed(ActionEvent event)
 									 {
-										 search();
+										 //search();
 									 }
 								 });
 
@@ -165,7 +193,7 @@ class Add_client extends JDialog
 								 {
 									 public void actionPerformed(ActionEvent event)
 									 {
-										 LibrarianGUI.add_client();
+										 //LibrarianGUI.add_client();
 									 }
 								 });
 
@@ -204,8 +232,7 @@ class LibrarianGUI extends JFrame
 
 		search = new Button("Wyszukaj");
 		add_client = new Button("Dodaj użytkownika");
-		check_in = new Button("Jakas nazwa");
-		check_out = new Button("Jakas nazwa");
+		check_in = new Button("Wypożyczanie");
 
 		search.addActionListener(
 								 new ActionListener()
@@ -241,16 +268,6 @@ class LibrarianGUI extends JFrame
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setBounds(100, 100, 800, 600);
         setVisible(true);
-	}
-
-	static void add_client()
-	{
-		System.out.println("Tutaj dodasz klienta");
-	}
-	
-	static void check_out()
-	{
-		
 	}
 }
 
