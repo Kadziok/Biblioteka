@@ -69,7 +69,7 @@ class Borrow extends JDialog
 	}
 }
 
-class Search extends JDialog
+class SearchLibrarian extends JDialog
 {
 	JTable table;
 	Button search_button, exit_button;
@@ -78,7 +78,7 @@ class Search extends JDialog
 	JScrollPane scroll_pane;
 	Panel main_panel, secondary_panel;
 
-	Search()
+	SearchLibrarian()
 	{
 		exit_button = new Button("Wyjdź");
 		scroll_pane = new JScrollPane();
@@ -221,7 +221,7 @@ class Add_client extends JDialog
 class LibrarianGUI extends JFrame
 {
 	Panel main_panel;
-	Button search, add_client, edit_state, check_in, check_out;
+	Button search, add_client, check_in, exit;
 
 	LibrarianGUI()
 	{
@@ -233,13 +233,14 @@ class LibrarianGUI extends JFrame
 		search = new Button("Wyszukaj");
 		add_client = new Button("Dodaj użytkownika");
 		check_in = new Button("Wypożyczanie");
-
+		exit = new Button("Wyjdź");
+		
 		search.addActionListener(
 								 new ActionListener()
 								 {
 									 public void actionPerformed(ActionEvent event)
 									 {
-										 JDialog search = new Search();
+										 JDialog search = new SearchLibrarian();
 									 }
 								 });
 		check_in.addActionListener(
@@ -258,14 +259,23 @@ class LibrarianGUI extends JFrame
 										 JDialog add_client = new Add_client();
 									 }
 								 });
+		exit.addActionListener(
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   System.exit(0);
+								   }
+							   });
 
 		
 		main_panel.add(search);
 		main_panel.add(add_client);
 		main_panel.add(check_in);
-		
+		main_panel.add(exit);		
+
 		add(main_panel);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 800, 600);
         setVisible(true);
 	}
