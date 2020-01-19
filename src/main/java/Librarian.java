@@ -16,6 +16,13 @@ import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableColumnModel;
+import javax.swing.RowFilter;
 
 class Borrow extends JDialog
 {
@@ -172,12 +179,43 @@ class SearchLibrarian extends JDialog
 		setTitle("Wyszukiwanie");
 		setSize(800, 600);
 		setResizable(false);
+		load_books();
 		setVisible(true);
+	}
+
+	void load_books()
+	{
+		model.setRowCount(0);
+        try
+			{
+				PreparedStatement st = DBConnection.get().prepareStatement
+					("SELECT call_number, books.isbn, title," + "authors.name, authors.last_name," + "if(books.isbn in (select books.isbn from copies join reservations on call_number = id UNION " + "SELECT books.isbn from copies join borrow on call_number = copy_id), 'Niedostępny', 'Dotępny')" + " FROM copies JOIN books ON copies.isbn = books.isbn " + "JOIN written_by ON books.isbn = written_by.isbn " + "JOIN authors ON written_by.author_id = authors.id;");
+				ResultSet rs = st.executeQuery();
+				if (rs.next())
+					{
+						model.addRow(new String[]{
+								rs.getString(1), rs.getString(2), rs.getString(3),
+								rs.getString(4) + " " + rs.getString(5), rs.getString(6)});
+					}
+			}
+        catch(SQLException e)
+			{
+				System.out.println("Problemy z załadowaniem książek");
+			}
 	}
 
 	void search()
 	{
-		System.out.println("Tu bedzie search");
+		try
+			{
+				TableRowSorter<DefaultTableModel> tr = new TableRowSorter<>(model);
+				table.setRowSorter(tr);
+				tr.setRowFilter(RowFilter.regexFilter(search_input.getText()));
+			}
+		catch(Exception e)
+			{
+				System.out.println("Problemy z searchem");
+			}
 	}
 }
 
@@ -185,7 +223,7 @@ class AddClient extends JDialog
 {
 	Panel button_panel, main_panel, login_panel, provide_panel, confirm_panel;
 	Label infos, label_login, label_provide, label_confirm;
-	JTextField login;
+	JTextField login_input;
 	JPasswordField provide, confirm;
 	Button add, exit;
 	AddClient()
@@ -200,9 +238,9 @@ class AddClient extends JDialog
 		login_panel = new Panel();
 		login_panel.setLayout(new BoxLayout(login_panel, BoxLayout.LINE_AXIS));
 		
-		login = new JTextField();
+		login_input = new JTextField();
 		login_panel.add(label_login);
-		login_panel.add(login);
+		login_panel.add(login_input);
 		
 		label_provide = new Label("Podaj hasło");
 		provide = new JPasswordField();
@@ -267,7 +305,42 @@ class AddClient extends JDialog
 	
 	void add_client()
 	{
-		dispose();
+		String login, password, confirmed, name, surname;
+		login = login_input.getText();
+		password = provide.getText();
+		confirmed = confirm.getText();
+		try
+			{
+				if(
+				   !(login.equals("") || password.equals("") ||
+					 confirmed.equals(""))
+				   )
+					{
+						if(password.equals(confirmed))
+							{
+								PreparedStatement st = DBConnection.get().
+									prepareStatement("INSERT INTO client VALUES (?, ?)");
+								st.setString(1, login);
+								st.setString(2, password);
+								ResultSet rs = st.executeQuery();
+							}
+						else
+							{
+								infos.setText("Hasła się nie zgadzają");
+							}
+					}
+				else
+					{
+						infos.setText("Złe dane");
+					}
+			}
+		catch(SQLException e)
+			{
+				infos.setText("Problem z dodaniem klienta");
+			}
+		login_input.setText("");
+		provide.setText("");
+		confirm.setText("");
 	}
 }
 

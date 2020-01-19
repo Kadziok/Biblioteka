@@ -1,3 +1,5 @@
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 import javax.swing.JFrame;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -22,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.security.NoSuchAlgorithmException;
+import javax.swing.RowFilter;
 
 
 class SetAuthor extends JDialog
@@ -368,7 +371,7 @@ class AddLibrarian extends JDialog
 				infos.setText("Problem z dodaniem bibliotekarza");
 			}
 		login_input.setText("");
-		password.setText("");
+		provide.setText("");
 		confirm.setText("");
 		name_input.setText("");
 		surname_input.setText("");
@@ -528,7 +531,6 @@ class SearchAdmin extends JDialog
 		scroll_pane = new JScrollPane();
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
-
 		String[] columns = {"ISBN", "Tytuł", "Gatunek", "Wydawca", "Rok"};
 
 		model = new DefaultTableModel(columns, 0);
