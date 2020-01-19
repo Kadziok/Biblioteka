@@ -18,10 +18,11 @@ import javax.swing.*;
  *
  * @author Oliver Watkins (c)
  */
-public class LoginGUI extends JDialog {
+public class LoginGUI extends JFrame {
 
     JLabel nameLabel = new JLabel("Name : ");
     JLabel passwordLabel = new JLabel("Password : ");
+    JLabel msg = new JLabel("");
 
     JTextField nameField = new JTextField();
     JPasswordField passwordField = new JPasswordField();
@@ -43,6 +44,8 @@ public class LoginGUI extends JDialog {
         JPanel topPanel = new JPanel(new GridBagLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
+        msg.setForeground(Color.red);
+        buttonPanel.add(msg);
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
 
@@ -131,14 +134,23 @@ public class LoginGUI extends JDialog {
             ResultSet rs=st.executeQuery();
 
             if(rs.next()) {
-                System.out.println("You logged in!");// + rs.getString(1));
+                msg.setText("");
 
+                String perm = rs.getString(2);
                 DBConnection.close();
-                ClientGUI client = new ClientGUI(userName);
+
+                if(perm.equalsIgnoreCase("Client")) {
+                    ClientGUI client = new ClientGUI(userName);
+                } else if(perm.equalsIgnoreCase("Librarian")){
+                    LibrarianGUI librarian = new LibrarianGUI();
+                } else if(perm.equalsIgnoreCase("Admin")){
+                    AdminGUI admin = new AdminGUI();
+                }
+
                 this.setVisible(false);
             }
             else
-                System.out.println("Incorrect input");
+                msg.setText("Nieprawidłowe dane");
 
         } catch (NoSuchAlgorithmException | SQLException ex) {
             ex.printStackTrace();
