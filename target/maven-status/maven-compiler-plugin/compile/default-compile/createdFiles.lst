@@ -1,6 +1,7 @@
 Add_client$1.class
 AdminGUI$4.class
 LibrarianGUI$4.class
+AddAuthor$2.class
 AddBook.class
 LibrarianGUI$2.class
 SearchLibrarian$2.class
@@ -11,6 +12,7 @@ SearchAdmin$2.class
 AddLibrarian$2.class
 AdminGUI.class
 SearchAdmin.class
+AddAuthor$1.class
 SearchLibrarian.class
 LibrarianGUI$3.class
 AdminGUI$3.class
@@ -22,8 +24,10 @@ Borrow.class
 AddLibrarian.class
 AddBook$1.class
 LibrarianGUI$1.class
+SetAuthor.class
 SearchLibrarian$1.class
 Librarian.class
 SearchAdmin$1.class
 AdminGUI$2.class
 AddLibrarian$1.class
+AddAuthor.class

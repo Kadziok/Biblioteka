@@ -17,6 +17,131 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
 
+
+class SetAuthor extends JDialog
+{
+	JTable table;
+	JScrollPane scroll_pane;
+	DefaultTableModel model;
+	Panel main_panel, secondary_panel, input_panel;
+	Button check_out, add_author, remove_author, exit;
+	JTextField isbn_input;
+	Label isbn_label, info;
+	SetAuthor()
+	{
+		main_panel = new Panel();
+		main_panel.setLayout(new BorderLayout());
+		isbn_label = new Label("Podaj id autora");
+		isbn_input = new JTextField();
+		input_panel = new Panel();
+		input_panel.setLayout(new BoxLayout(input_panel, BoxLayout.LINE_AXIS));
+		input_panel.add(isbn_label);
+		input_panel.add(isbn_input);
+		
+		secondary_panel = new Panel();
+		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
+		check_out = new Button("Dodaj do bazy danych");
+	  	add_author = new Button("Dodaj autora");
+		remove_author = new Button("Usuń autora");
+		exit = new Button("Wyjdź");
+		
+		secondary_panel.add(input_panel);
+		secondary_panel.add(check_out);
+		secondary_panel.add(add_author);
+		secondary_panel.add(remove_author);
+		secondary_panel.add(exit);
+
+		String[] columns = {"Id autora"};
+		model = new DefaultTableModel(columns, 0);
+		table = new JTable(model);
+		
+		scroll_pane = new JScrollPane();
+		scroll_pane.setViewportView(table);
+		main_panel.add(scroll_pane, BorderLayout.LINE_START);
+		main_panel.add(secondary_panel, BorderLayout.CENTER);
+		add(main_panel);
+
+		pack();
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setTitle("Ustawianie autorów");
+		setSize(800, 600);
+		setResizable(false);
+		setVisible(true);
+	}
+}
+
+class AddAuthor extends JDialog
+{
+	Panel button_panel, main_panel, name_panel, surname_panel;
+	Label infos, name_label, surname_label;
+	JTextField name_input, surname_input;
+	Button add, exit;
+	AddAuthor()
+	{
+		main_panel = new Panel();
+		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.PAGE_AXIS));
+
+		infos = new Label();
+		
+		name_panel = new Panel();
+		name_label = new Label("Podaj imię");
+		name_input = new JTextField();
+		name_panel.setLayout(new BoxLayout(name_panel, BoxLayout.LINE_AXIS));
+		name_panel.add(name_label);
+		name_panel.add(name_input);
+		
+		surname_panel = new Panel();
+		surname_label = new Label("Podaj nazwisko");
+		surname_input = new JTextField();
+		surname_panel.setLayout(new BoxLayout(surname_panel, BoxLayout.LINE_AXIS));
+		surname_panel.add(surname_label);
+		surname_panel.add(surname_input);
+		
+		main_panel.add(infos);
+		main_panel.add(name_panel);
+		main_panel.add(surname_panel);
+		
+		add = new Button("Dodaj");
+		exit = new Button("Wyjdź");
+		
+		exit.addActionListener(
+								 new ActionListener()
+								 {
+									 public void actionPerformed(ActionEvent event)
+									 {
+										 dispose();
+									 }
+								 });
+		add.addActionListener(
+								 new ActionListener()
+								 {
+									 public void actionPerformed(ActionEvent event)
+									 {
+										 
+									 }
+								 });
+
+		
+		button_panel = new Panel();
+
+		button_panel.setLayout(new BoxLayout(button_panel, BoxLayout.LINE_AXIS));
+		
+		button_panel.add(add);
+		button_panel.add(exit);
+
+		main_panel.add(button_panel);
+
+		add(main_panel);
+
+		pack();
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setTitle("Dodawanie autora");
+		setSize(800, 600);
+		setVisible(true);
+		setResizable(false);
+	}
+}
+	
 class AddLibrarian extends JDialog
 {
 	Panel button_panel, main_panel, login_panel, provide_panel, confirm_panel,
@@ -113,7 +238,7 @@ class AddLibrarian extends JDialog
 
 		pack();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Dodawanie bibliotekarza");
+		setTitle("Dodawanie autorów do pozycji");
 		setSize(800, 600);
 		setVisible(true);
 		setResizable(false);
