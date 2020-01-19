@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
+import javax.swing.JComboBox;
 
 
 class SetAuthor extends JDialog
@@ -24,30 +25,73 @@ class SetAuthor extends JDialog
 	JScrollPane scroll_pane;
 	DefaultTableModel model;
 	Panel main_panel, secondary_panel, input_panel;
-	Button check_out, add_author, remove_author, exit;
-	JTextField isbn_input;
-	Label isbn_label, info;
+	Button check_out, add_author, remove_author, exit, add_new;
+	JComboBox id_input;
+	Label id_label, info;
 	SetAuthor()
 	{
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
-		isbn_label = new Label("Podaj id autora");
-		isbn_input = new JTextField();
+		id_label = new Label("Podaj id autora");
+		id_input = new JComboBox();
 		input_panel = new Panel();
 		input_panel.setLayout(new BoxLayout(input_panel, BoxLayout.LINE_AXIS));
-		input_panel.add(isbn_label);
-		input_panel.add(isbn_input);
+		input_panel.add(id_label);
+		input_panel.add(id_input);
 		
 		secondary_panel = new Panel();
 		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
 		check_out = new Button("Dodaj do bazy danych");
+		add_new = new Button("Dodaj nowego autora");
 	  	add_author = new Button("Dodaj autora");
 		remove_author = new Button("Usuń autora");
 		exit = new Button("Wyjdź");
-		
+
+		exit.addActionListener(
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
+		remove_author.addActionListener(
+									 new ActionListener()
+									 {
+										 public void actionPerformed(ActionEvent event)
+										 {
+											 
+										 }
+									 });
+		add_author.addActionListener(
+									 new ActionListener()
+									 {
+										 public void actionPerformed(ActionEvent event)
+										 {
+										 
+										 }
+									 });
+		add_new.addActionListener(
+									 new ActionListener()
+									 {
+										 public void actionPerformed(ActionEvent event)
+										 {
+										 
+										 }
+									 });
+		check_out.addActionListener(
+									 new ActionListener()
+									 {
+										 public void actionPerformed(ActionEvent event)
+										 {
+										 
+										 }
+									 });
+
 		secondary_panel.add(input_panel);
 		secondary_panel.add(check_out);
 		secondary_panel.add(add_author);
+		secondary_panel.add(add_new);
 		secondary_panel.add(remove_author);
 		secondary_panel.add(exit);
 
@@ -105,21 +149,21 @@ class AddAuthor extends JDialog
 		exit = new Button("Wyjdź");
 		
 		exit.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
 		add.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
+							  new ActionListener()
+							  {
+								  public void actionPerformed(ActionEvent event)
+								  {
 										 
-									 }
-								 });
+								  }
+							  });
 
 		
 		button_panel = new Panel();
@@ -208,21 +252,21 @@ class AddLibrarian extends JDialog
 		exit = new Button("Wyjdź");
 		
 		exit.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
 		add.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
+							  new ActionListener()
+							  {
+								  public void actionPerformed(ActionEvent event)
+								  {
 										 
-									 }
-								 });
+								  }
+							  });
 
 		
 		button_panel = new Panel();
@@ -312,21 +356,21 @@ class AddBook extends JDialog
 		exit = new Button("Wyjdź");
 		
 		exit.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
 		add.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
+							  new ActionListener()
+							  {
+								  public void actionPerformed(ActionEvent event)
+								  {
 										 
-									 }
-								 });
+								  }
+							  });
 
 		
 		button_panel = new Panel();
@@ -383,21 +427,21 @@ class SearchAdmin extends JDialog
 		add(main_panel);
 
 		exit_button.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+									  new ActionListener()
+									  {
+										  public void actionPerformed(ActionEvent event)
+										  {
+											  dispose();
+										  }
+									  });
 		search_button.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 //search();
-									 }
-								 });
+										new ActionListener()
+										{
+											public void actionPerformed(ActionEvent event)
+											{
+												//search();
+											}
+										});
 
 		
 		pack();
@@ -442,37 +486,37 @@ class AdminGUI extends JFrame
 									 }
 								 });
 		add_librarian.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 JDialog add_librarian = new AddLibrarian();
-									 }
-								 });
+										new ActionListener()
+										{
+											public void actionPerformed(ActionEvent event)
+											{
+												JDialog add_librarian = new AddLibrarian();
+											}
+										});
 		add_book.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 JDialog add_book = new AddBook();
-									 }
-								 });
+								   new ActionListener()
+								   {
+									   public void actionPerformed(ActionEvent event)
+									   {
+										   JDialog add_book = new AddBook();
+									   }
+								   });
 		update_reservations.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 updateReservations();
-									 }
-								 });
+											  new ActionListener()
+											  {
+												  public void actionPerformed(ActionEvent event)
+												  {
+													  updateReservations();
+												  }
+											  });
 		exit.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 System.exit(0);
-									 }
-								 });
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   System.exit(0);
+								   }
+							   });
 
 		
 		main_panel.add(search);
@@ -498,5 +542,7 @@ public class Admin
 	public static void main(String[] args)
 	{
 		JFrame admin_gui = new AdminGUI();
+		JDialog check_author = new SetAuthor();
+		JDialog nw = new AddAuthor();
 	}
 }
