@@ -17,19 +17,26 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
 import javax.swing.JComboBox;
+import java.sql.ResultSet;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.security.NoSuchAlgorithmException;
 
 
 class SetAuthor extends JDialog
 {
 	JTable table;
+	String isbn;
 	JScrollPane scroll_pane;
 	DefaultTableModel model;
 	Panel main_panel, secondary_panel, input_panel;
 	Button check_out, add_author, remove_author, exit, add_new;
 	JComboBox id_input;
 	Label id_label, info;
-	SetAuthor()
+	SetAuthor(String isbn)
 	{
+		this.isbn = isbn;
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
 		id_label = new Label("Podaj id autora");
@@ -56,37 +63,37 @@ class SetAuthor extends JDialog
 								   }
 							   });
 		remove_author.addActionListener(
-									 new ActionListener()
-									 {
-										 public void actionPerformed(ActionEvent event)
-										 {
-											 
-										 }
-									 });
+										new ActionListener()
+										{
+											public void actionPerformed(ActionEvent event)
+											{
+												remove_author();
+											}
+										});
 		add_author.addActionListener(
 									 new ActionListener()
 									 {
 										 public void actionPerformed(ActionEvent event)
 										 {
-										 
+											 add_author();
 										 }
 									 });
 		add_new.addActionListener(
-									 new ActionListener()
-									 {
-										 public void actionPerformed(ActionEvent event)
-										 {
-										 
-										 }
-									 });
+								  new ActionListener()
+								  {
+									  public void actionPerformed(ActionEvent event)
+									  {
+										  add_new_author();
+									  }
+								  });
 		check_out.addActionListener(
-									 new ActionListener()
-									 {
-										 public void actionPerformed(ActionEvent event)
-										 {
-										 
-										 }
-									 });
+									new ActionListener()
+									{
+										public void actionPerformed(ActionEvent event)
+										{
+											check_out();
+										}
+									});
 
 		secondary_panel.add(input_panel);
 		secondary_panel.add(check_out);
@@ -110,7 +117,34 @@ class SetAuthor extends JDialog
 		setTitle("Ustawianie autorów");
 		setSize(800, 600);
 		setResizable(false);
+
+		load_authors();
 		setVisible(true);
+	}
+
+	void load_authors()
+	{
+		
+	}
+
+	void check_out()
+	{
+		
+	}
+
+	void add_new_author()
+	{
+		JDialog add_author = new AddAuthor();
+	}
+
+	void add_author()
+	{
+		
+	}
+
+	void remove_author()
+	{
+		
 	}
 }
 
@@ -161,7 +195,7 @@ class AddAuthor extends JDialog
 							  {
 								  public void actionPerformed(ActionEvent event)
 								  {
-										 
+									  add_author();
 								  }
 							  });
 
@@ -184,6 +218,11 @@ class AddAuthor extends JDialog
 		setVisible(true);
 		setResizable(false);
 	}
+
+	void add_author()
+	{
+		
+	}
 }
 	
 class AddLibrarian extends JDialog
@@ -192,7 +231,7 @@ class AddLibrarian extends JDialog
 		name_panel, surname_panel;
 	Label infos, label_login, label_provide, label_confirm,
 		name_label, surname_label;
-	JTextField login, name_input, surname_input;
+	JTextField login_input, name_input, surname_input;
 	JPasswordField provide, confirm;
 	Button add, exit;
 	AddLibrarian()
@@ -207,9 +246,9 @@ class AddLibrarian extends JDialog
 		login_panel = new Panel();
 		login_panel.setLayout(new BoxLayout(login_panel, BoxLayout.LINE_AXIS));
 		
-		login = new JTextField();
+		login_input = new JTextField();
 		login_panel.add(label_login);
-		login_panel.add(login);
+		login_panel.add(login_input);
 		
 		label_provide = new Label("Podaj hasło");
 		provide = new JPasswordField();
@@ -264,7 +303,7 @@ class AddLibrarian extends JDialog
 							  {
 								  public void actionPerformed(ActionEvent event)
 								  {
-										 
+									  add_librarian();
 								  }
 							  });
 
@@ -287,6 +326,53 @@ class AddLibrarian extends JDialog
 		setVisible(true);
 		setResizable(false);
 	}
+
+	void add_librarian()
+	{
+		try
+			{
+				String login, password, confirmed, name, surname;
+				login = login_input.getText();
+				password = provide.getText();
+				confirmed = confirm.getText();
+				name = name_input.getText();
+				surname = surname_input.getText();
+
+				if(
+				   !(login.equals("") || password.equals("") ||
+					 confirmed.equals("") || name.equals("") || surname.equals(""))
+				   )
+					{
+						if(password.equals(confirmed))
+							{
+								PreparedStatement st = DBConnection.get().
+									prepareStatement("INSERT INTO librarian VALUES (?, ?, ?, ?)");
+								st.setString(1, login);
+								st.setString(2, password);
+								st.setString(3, name);
+								st.setString(4, surname);
+								ResultSet rs = st.executeQuery();
+							}
+						else
+							{
+								infos.setText("Hasła się nie zgadzają");
+							}
+					}
+				else
+					{
+						infos.setText("Złe dane");
+					}
+			}
+		catch(SQLException e)
+			{
+				infos.setText("Problem z dodaniem bibliotekarza");
+			}
+		login_input.setText("");
+		password.setText("");
+		confirm.setText("");
+		name_input.setText("");
+		surname_input.setText("");
+	}
 }
 
 class AddBook extends JDialog
@@ -295,8 +381,7 @@ class AddBook extends JDialog
 		editor_panel, year_panel;
 	Label infos, label_isbn, label_title, label_genre,
 		editor_label, year_label;
-	JTextField isbn, editor_input, year_input;
-	JTextField title, genre;
+	JTextField isbn_input, editor_input, year_input, title_input, genre_input;
 	Button add, exit;
 	AddBook()
 	{
@@ -310,25 +395,25 @@ class AddBook extends JDialog
 		isbn_panel = new Panel();
 		isbn_panel.setLayout(new BoxLayout(isbn_panel, BoxLayout.LINE_AXIS));
 		
-		isbn = new JTextField();
+		isbn_input = new JTextField();
 		isbn_panel.add(label_isbn);
-		isbn_panel.add(isbn);
+		isbn_panel.add(isbn_input);
 		
 		label_title = new Label("Podaj tytuł");
-		title = new JTextField();
+		title_input = new JTextField();
 		
 		title_panel = new Panel();
 		title_panel.setLayout(new BoxLayout(title_panel, BoxLayout.LINE_AXIS));
 		title_panel.add(label_title);
-		title_panel.add(title);
+		title_panel.add(title_input);
 		
 		label_genre = new Label("Podaj gatunek"); 
-		genre = new JTextField();
+		genre_input = new JTextField();
 
 		genre_panel = new Panel();
 		genre_panel.setLayout(new BoxLayout(genre_panel, BoxLayout.LINE_AXIS));
 		genre_panel.add(label_genre);
-		genre_panel.add(genre);
+		genre_panel.add(genre_input);
 
 		editor_panel = new Panel();
 		editor_label = new Label("Podaj wydawcę");
@@ -368,7 +453,7 @@ class AddBook extends JDialog
 							  {
 								  public void actionPerformed(ActionEvent event)
 								  {
-										 
+									  add_book();
 								  }
 							  });
 
@@ -390,6 +475,40 @@ class AddBook extends JDialog
 		setSize(800, 600);
 		setVisible(true);
 		setResizable(false);
+	}
+
+	void add_book()
+	{
+		String isbn = isbn_input.getText();
+		String editor = editor_input.getText();
+		String year = year_input.getText();
+		String title = title_input.getText();
+		String genre = genre_input.getText();
+
+		try
+			{
+				if(!(isbn.equals("") || editor.equals("") || year.equals("") || title.equals("") || genre.equals("")))
+					{
+						PreparedStatement st = DBConnection.get().
+							prepareStatement("INSERT INTO books VALUES (?, ?, ?, ?, ?)");
+						st.setString(1, isbn);
+						st.setString(2, editor);
+						st.setString(3, year);
+						st.setString(4, title);
+						st.setString(5, genre);
+						ResultSet rs = st.executeQuery();
+					}
+			}
+		catch(SQLException e)
+			{
+				infos.setText("Problem z dodaniem książki do bazy danych");
+			}
+		isbn_input.setText("");
+		editor_input.setText("");
+		year_input.setText("");
+		title_input.setText("");
+		genre_input.setText("");
+		JDialog set_author = new SetAuthor(isbn); 
 	}
 }
 
@@ -439,7 +558,7 @@ class SearchAdmin extends JDialog
 										{
 											public void actionPerformed(ActionEvent event)
 											{
-												//search();
+												search();
 											}
 										});
 
@@ -533,7 +652,18 @@ class AdminGUI extends JFrame
 
 	void updateReservations()
 	{
-		
+		try
+			{
+				PreparedStatement st = DBConnection.get().
+					prepareStatement(
+									 "DELETE FROM reservations WHERE DATEDIFF(CURDATE(), date) >= 3"
+									 );
+				ResultSet rs = st.executeQuery();
+			}
+		catch(SQLException ex)
+			{
+				System.out.println("Errory here");
+			}
 	}
 }
 
@@ -542,7 +672,5 @@ public class Admin
 	public static void main(String[] args)
 	{
 		JFrame admin_gui = new AdminGUI();
-		JDialog check_author = new SetAuthor();
-		JDialog nw = new AddAuthor();
 	}
 }
