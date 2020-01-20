@@ -16,6 +16,13 @@ import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableColumnModel;
+import javax.swing.RowFilter;
 
 class Borrow extends JDialog
 {
@@ -24,18 +31,18 @@ class Borrow extends JDialog
 	DefaultTableModel model;
 	Panel main_panel, secondary_panel, input_panel;
 	Button check_out, add_book, remove_book, exit;
-	JTextField isbn_input;
-	Label isbn_label, info;
+	JTextField id_input;
+	Label id_label, info;
 	Borrow()
 	{
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
-		isbn_label = new Label("Podaj id egzemplarza");
-		isbn_input = new JTextField();
+		id_label = new Label("Podaj id egzemplarza");
+		id_input = new JTextField();
 		input_panel = new Panel();
 		input_panel.setLayout(new BoxLayout(input_panel, BoxLayout.LINE_AXIS));
-		input_panel.add(isbn_label);
-		input_panel.add(isbn_input);
+		input_panel.add(id_label);
+		input_panel.add(id_input);
 		
 		secondary_panel = new Panel();
 		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
@@ -43,7 +50,40 @@ class Borrow extends JDialog
 	  	add_book = new Button("Dodaj książkę");
 		remove_book = new Button("Usuń książkę");
 		exit = new Button("Wyjdź");
-		
+
+		exit.addActionListener(
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
+		check_out.addActionListener(
+									new ActionListener()
+									{
+										public void actionPerformed(ActionEvent event)
+										{
+											check_out();
+										}
+									});
+		remove_book.addActionListener(
+									  new ActionListener()
+									  {
+										  public void actionPerformed(ActionEvent event)
+										  {
+											  remove_book();
+										  }
+									  });
+		add_book.addActionListener(
+								   new ActionListener()
+								   {
+									   public void actionPerformed(ActionEvent event)
+									   {
+										   add_book();
+									   }
+								   });
+				
 		secondary_panel.add(input_panel);
 		secondary_panel.add(check_out);
 		secondary_panel.add(add_book);
@@ -66,6 +106,21 @@ class Borrow extends JDialog
 		setSize(800, 600);
 		setResizable(false);
 		setVisible(true);
+	}
+
+	void check_out()
+	{
+		
+	}
+
+	void add_book()
+	{
+		
+	}
+
+	void remove_book()
+	{
+		
 	}
 }
 
@@ -102,21 +157,21 @@ class SearchLibrarian extends JDialog
 		add(main_panel);
 
 		exit_button.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+									  new ActionListener()
+									  {
+										  public void actionPerformed(ActionEvent event)
+										  {
+											  dispose();
+										  }
+									  });
 		search_button.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 //search();
-									 }
-								 });
+										new ActionListener()
+										{
+											public void actionPerformed(ActionEvent event)
+											{
+												search();
+											}
+										});
 
 		
 		pack();
@@ -124,23 +179,54 @@ class SearchLibrarian extends JDialog
 		setTitle("Wyszukiwanie");
 		setSize(800, 600);
 		setResizable(false);
+		load_books();
 		setVisible(true);
+	}
+
+	void load_books()
+	{
+		model.setRowCount(0);
+        try
+			{
+				PreparedStatement st = DBConnection.get().prepareStatement
+					("SELECT call_number, books.isbn, title," + "authors.name, authors.last_name," + "if(books.isbn in (select books.isbn from copies join reservations on call_number = id UNION " + "SELECT books.isbn from copies join borrow on call_number = copy_id), 'Niedostępny', 'Dotępny')" + " FROM copies JOIN books ON copies.isbn = books.isbn " + "JOIN written_by ON books.isbn = written_by.isbn " + "JOIN authors ON written_by.author_id = authors.id;");
+				ResultSet rs = st.executeQuery();
+				if (rs.next())
+					{
+						model.addRow(new String[]{
+								rs.getString(1), rs.getString(2), rs.getString(3),
+								rs.getString(4) + " " + rs.getString(5), rs.getString(6)});
+					}
+			}
+        catch(SQLException e)
+			{
+				System.out.println("Problemy z załadowaniem książek");
+			}
 	}
 
 	void search()
 	{
-		System.out.println("Tu bedzie search");
+		try
+			{
+				TableRowSorter<DefaultTableModel> tr = new TableRowSorter<>(model);
+				table.setRowSorter(tr);
+				tr.setRowFilter(RowFilter.regexFilter(search_input.getText()));
+			}
+		catch(Exception e)
+			{
+				System.out.println("Problemy z searchem");
+			}
 	}
 }
 
-class Add_client extends JDialog
+class AddClient extends JDialog
 {
 	Panel button_panel, main_panel, login_panel, provide_panel, confirm_panel;
 	Label infos, label_login, label_provide, label_confirm;
-	JTextField login;
+	JTextField login_input;
 	JPasswordField provide, confirm;
 	Button add, exit;
-	Add_client()
+	AddClient()
 	{
 		main_panel = new Panel();
 		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.PAGE_AXIS));
@@ -152,9 +238,9 @@ class Add_client extends JDialog
 		login_panel = new Panel();
 		login_panel.setLayout(new BoxLayout(login_panel, BoxLayout.LINE_AXIS));
 		
-		login = new JTextField();
+		login_input = new JTextField();
 		login_panel.add(label_login);
-		login_panel.add(login);
+		login_panel.add(login_input);
 		
 		label_provide = new Label("Podaj hasło");
 		provide = new JPasswordField();
@@ -181,21 +267,21 @@ class Add_client extends JDialog
 		exit = new Button("Wyjdź");
 		
 		exit.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 dispose();
-									 }
-								 });
+							   new ActionListener()
+							   {
+								   public void actionPerformed(ActionEvent event)
+								   {
+									   dispose();
+								   }
+							   });
 		add.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 //LibrarianGUI.add_client();
-									 }
-								 });
+							  new ActionListener()
+							  {
+								  public void actionPerformed(ActionEvent event)
+								  {
+									  add_client();
+								  }
+							  });
 
 		
 		button_panel = new Panel();
@@ -215,6 +301,46 @@ class Add_client extends JDialog
 		setSize(800, 600);
 		setVisible(true);
 		setResizable(false);
+	}
+	
+	void add_client()
+	{
+		String login, password, confirmed, name, surname;
+		login = login_input.getText();
+		password = provide.getText();
+		confirmed = confirm.getText();
+		try
+			{
+				if(
+				   !(login.equals("") || password.equals("") ||
+					 confirmed.equals(""))
+				   )
+					{
+						if(password.equals(confirmed))
+							{
+								PreparedStatement st = DBConnection.get().
+									prepareStatement("INSERT INTO client VALUES (?, ?)");
+								st.setString(1, login);
+								st.setString(2, password);
+								ResultSet rs = st.executeQuery();
+							}
+						else
+							{
+								infos.setText("Hasła się nie zgadzają");
+							}
+					}
+				else
+					{
+						infos.setText("Złe dane");
+					}
+			}
+		catch(SQLException e)
+			{
+				infos.setText("Problem z dodaniem klienta");
+			}
+		login_input.setText("");
+		provide.setText("");
+		confirm.setText("");
 	}
 }
 
@@ -244,21 +370,21 @@ class LibrarianGUI extends JFrame
 									 }
 								 });
 		check_in.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
-									 {
-										 JDialog borrow = new Borrow();
-									 }
-								 });
+								   new ActionListener()
+								   {
+									   public void actionPerformed(ActionEvent event)
+									   {
+										   JDialog borrow = new Borrow();
+									   }
+								   });
 		add_client.addActionListener(
-								 new ActionListener()
-								 {
-									 public void actionPerformed(ActionEvent event)
+									 new ActionListener()
 									 {
-										 JDialog add_client = new Add_client();
-									 }
-								 });
+										 public void actionPerformed(ActionEvent event)
+										 {
+											 JDialog add_client = new AddClient();
+										 }
+									 });
 		exit.addActionListener(
 							   new ActionListener()
 							   {
