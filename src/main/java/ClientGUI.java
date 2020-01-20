@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
@@ -43,21 +45,36 @@ public class ClientGUI implements ActionListener {
 
         view = new JComboBox<>(options);
         view.addActionListener(this);
-        panel.setLayout(new GridLayout(13, 2));
+        panel.setLayout(new GridLayout(14, 2));
 
         panel.add(new JLabel("   Jesteś zalogowany jako " + login + "   "));
+        panel.add(new JLabel(""));
+        panel.add(new JLabel("Przeglądaj: "));
         panel.add(view);
 
+        //filter = new JButton("Filtruj");
+        //filter.addActionListener(this);
+        panel.add(new JLabel("Szukaj wyrażenia: "));
+        isbn = new JTextField();
+        panel.add(isbn);
+
+        panel.add(new JLabel(""));
         res = new JButton("Rezerwuj");
         res.addActionListener(this);
         panel.add(res);
 
-        filter = new JButton("Filtruj");
-        filter.addActionListener(this);
-        panel.add(filter);
-        panel.add(new JLabel("Szukaj wyrażenia: "));
-        isbn = new JTextField();
-        panel.add(isbn);
+        isbn.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+        });
 
         for(int i = 0; i < 19; i++){
             panel.add(new JLabel(""));
@@ -71,18 +88,18 @@ public class ClientGUI implements ActionListener {
         model.setRowCount(0);
         try {
             PreparedStatement st = DBConnection.get().prepareStatement("SELECT call_number, books.isbn, title," +
-                    "authors.name, authors.last_name," +
-                    "if(books.isbn in (select books.isbn from copies join reservations on call_number = id UNION " +
-                    "SELECT books.isbn from copies join borrow on call_number = copy_id), 'Niedostępny', 'Dotępny')" +
-                    " FROM copies JOIN books ON copies.isbn = books.isbn " +
+                    "GROUP_CONCAT(CONCAT(authors.name, ' ', authors.last_name) SEPARATOR ', '), " +
+                    "if(call_number in (select id from reservations UNION " +
+                    "SELECT copy_id from borrow), 'Niedostępny', 'Dostępny') " +
+                    "FROM copies JOIN books ON copies.isbn = books.isbn " +
                     "JOIN written_by ON books.isbn = written_by.isbn " +
-                    "JOIN authors ON written_by.author_id = authors.id;");
+                    "JOIN authors ON written_by.author_id = authors.id GROUP BY call_number;");
             ResultSet rs = st.executeQuery();
 
-            if (rs.next()) {
+            while (rs.next()) {
                 model.addRow(new String[]{rs.getString(1), rs.getString(2),
-                        rs.getString(3), rs.getString(4) + " " + rs.getString(5),
-                        rs.getString(6)});
+                        rs.getString(3), rs.getString(4),
+                        rs.getString(5)});
             }
         }
         catch(SQLException e){
@@ -94,19 +111,19 @@ public class ClientGUI implements ActionListener {
         model.setRowCount(0);
         try {
             PreparedStatement st = DBConnection.get().prepareStatement("SELECT reservations.id, books.isbn, title," +
-                    "authors.name, authors.last_name," +
+                    "GROUP_CONCAT(CONCAT(authors.name, ' ', authors.last_name) SEPARATOR ', '), " +
                     "DATE_ADD(reservations.date, INTERVAL 3 DAY) " +
                     "FROM reservations JOIN copies ON reservations.id = copies.call_number " +
                     "JOIN books ON copies.isbn = books.isbn " +
                     "JOIN written_by ON books.isbn = written_by.isbn " +
-                    "JOIN authors ON written_by.author_id = authors.id WHERE reservations.login = ?;");
+                    "JOIN authors ON written_by.author_id = authors.id WHERE reservations.login = ? GROUP BY books.isbn;");
             st.setString(1, login);
             ResultSet rs = st.executeQuery();
 
-            if (rs.next()) {
+            while (rs.next()) {
                 model.addRow(new String[]{rs.getString(1), rs.getString(2),
-                        rs.getString(3), rs.getString(4) + " " + rs.getString(5),
-                        rs.getString(6)});
+                        rs.getString(3), rs.getString(4),
+                        rs.getString(5)});
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -118,19 +135,19 @@ public class ClientGUI implements ActionListener {
         model.setRowCount(0);
         try {
             PreparedStatement st = DBConnection.get().prepareStatement("SELECT borrow.id, books.isbn, title," +
-                    "authors.name, authors.last_name," +
+                    "GROUP_CONCAT(CONCAT(authors.name, ' ', authors.last_name) SEPARATOR ', '), " +
                     "DATE_ADD(borrow.date, INTERVAL 1 MONTH) " +
-                    "FROM borrow JOIN copies ON borrow.id = copies.call_number " +
+                    "FROM borrow JOIN copies ON borrow.copy_id = copies.call_number " +
                     "JOIN books ON copies.isbn = books.isbn " +
                     "JOIN written_by ON books.isbn = written_by.isbn " +
-                    "JOIN authors ON written_by.author_id = authors.id WHERE borrow.login = ?;");
+                    "JOIN authors ON written_by.author_id = authors.id WHERE borrow.login = ? GROUP BY books.isbn;");
             st.setString(1, login);
             ResultSet rs = st.executeQuery();
 
-            if (rs.next()) {
+            while (rs.next()) {
                 model.addRow(new String[]{rs.getString(1), rs.getString(2),
-                        rs.getString(3), rs.getString(4) + " " + rs.getString(5),
-                        rs.getString(6)});
+                        rs.getString(3), rs.getString(4),
+                        rs.getString(5)});
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -139,7 +156,7 @@ public class ClientGUI implements ActionListener {
     private void filter(){
         TableRowSorter<DefaultTableModel> tr = new TableRowSorter<>(model);
         table.setRowSorter(tr);
-        tr.setRowFilter(RowFilter.regexFilter(isbn.getText()));
+        tr.setRowFilter(RowFilter.regexFilter("(?i)" + isbn.getText()));
     }
 
     @Override
@@ -184,8 +201,6 @@ public class ClientGUI implements ActionListener {
                 table.getTableHeader().getColumnModel().getColumn(4).setHeaderValue("Odbiór do");
                 loadReservations();
             }
-        } else if(name.equals("Filtruj")){
-            filter();
         }
 
     }

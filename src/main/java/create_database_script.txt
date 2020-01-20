@@ -50,6 +50,24 @@ CREATE USER 'Librarian'@'localhost' IDENTIFIED BY 'haslo2';
 CREATE USER 'Admin'@'localhost' IDENTIFIED BY 'haslo3';
 
 GRANT Select, Insert on library.* to 'Client'@'localhost';
+GRANT Select, Insert, Update on library.* to Librarian@localhost;
+GRANT ALL on library.* to Admin@localhost;
 
 insert into users (login, name, last_name, pass, permissions) values ('john1', 'John', 'Doe', md5('pass'), 'Client');
 
+DELIMITER $$
+CREATE PROCEDURE update_res()
+BEGIN
+DELETE FROM reservations WHERE DATEDIFF(CURDATE(), date) >= 3;
+END $$
+DELIMITER ;
+
+
+DELIMITER $$
+CREATE TRIGGER del_res
+    AFTER INSERT
+    ON borrow FOR EACH ROW
+BEGIN
+    delete from reservations where reservations.id = NEW.copy_id;
+END$$
+DELIMITER ;

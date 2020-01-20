@@ -16,6 +16,9 @@ import javax.swing.JScrollPane;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,9 +32,9 @@ class Borrow extends JDialog
 	JTable table;
 	JScrollPane scroll_pane;
 	DefaultTableModel model;
-	Panel main_panel, secondary_panel, input_panel;
+	Panel main_panel, secondary_panel, input_panel, login_panel;
 	Button check_out, add_book, remove_book, exit;
-	JTextField id_input;
+	JTextField id_input, login_input;
 	Label id_label, info;
 	Borrow()
 	{
@@ -43,6 +46,12 @@ class Borrow extends JDialog
 		input_panel.setLayout(new BoxLayout(input_panel, BoxLayout.LINE_AXIS));
 		input_panel.add(id_label);
 		input_panel.add(id_input);
+
+		login_panel = new Panel();
+		login_panel.setLayout(new BoxLayout(login_panel, BoxLayout.LINE_AXIS));
+		login_panel.add(new Label("Login"));
+		login_input = new JTextField();
+		login_panel.add(login_input);
 		
 		secondary_panel = new Panel();
 		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
@@ -85,6 +94,7 @@ class Borrow extends JDialog
 								   });
 				
 		secondary_panel.add(input_panel);
+		secondary_panel.add(login_panel);
 		secondary_panel.add(check_out);
 		secondary_panel.add(add_book);
 		secondary_panel.add(remove_book);
@@ -110,17 +120,65 @@ class Borrow extends JDialog
 
 	void check_out()
 	{
-		
+		String val = "";
+		int row_count = table.getRowCount();
+		for(int i = 0; i < row_count; i++)
+		{
+			String value = table.getValueAt(i, 0).toString();
+			if(!value.equals("")) {
+				val = val + ("(" + value +
+						", NOW(), \'" + login_input.getText());
+				if(i == row_count - 1)
+				{
+					val = val + "');";
+				}
+				else
+				{
+					val = val + "'), ";
+				}
+			}
+		}
+		try {
+			DBConnection.get().setAutoCommit(false);
+			PreparedStatement st = DBConnection.get().prepareStatement("INSERT INTO borrow (copy_id," +
+					" date, login) VALUES " + val);
+			st.executeUpdate();
+			DBConnection.get().commit();
+		} catch (SQLException e) {
+			try {
+				DBConnection.get().rollback();
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+			}
+			e.printStackTrace();
+		}
 	}
 
 	void add_book()
 	{
-		
+		if(!id_input.getText().equals("")) {
+			try {
+				PreparedStatement st = DBConnection.get().prepareStatement("SELECT true WHERE ?" +
+						" NOT IN(Select id from reservations WHERE login <> ?);");
+				st.setString(2, login_input.getText());
+				st.setString(1, id_input.getText());
+				ResultSet rs = st.executeQuery();
+
+				if (rs.next()) {
+					model.addRow(new String[]{id_input.getText()});
+					id_input.setText("");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	void remove_book()
 	{
-		
+		if(table.getSelectedRow() >= 0){
+			model.removeRow(table.getSelectedRow());
+		}
 	}
 }
 
@@ -188,14 +246,19 @@ class SearchLibrarian extends JDialog
 		model.setRowCount(0);
         try
 			{
-				PreparedStatement st = DBConnection.get().prepareStatement
-					("SELECT call_number, books.isbn, title," + "authors.name, authors.last_name," + "if(books.isbn in (select books.isbn from copies join reservations on call_number = id UNION " + "SELECT books.isbn from copies join borrow on call_number = copy_id), 'Niedostępny', 'Dotępny')" + " FROM copies JOIN books ON copies.isbn = books.isbn " + "JOIN written_by ON books.isbn = written_by.isbn " + "JOIN authors ON written_by.author_id = authors.id;");
+				PreparedStatement st = DBConnection.get().prepareStatement("SELECT call_number, books.isbn, title," +
+						"GROUP_CONCAT(CONCAT(authors.name, ' ', authors.last_name) SEPARATOR ', '), " +
+						"if(call_number in (select id from reservations UNION " +
+						"SELECT copy_id from borrow), 'Niedostępny', 'Dostępny') " +
+						"FROM copies JOIN books ON copies.isbn = books.isbn " +
+						"JOIN written_by ON books.isbn = written_by.isbn " +
+						"JOIN authors ON written_by.author_id = authors.id GROUP BY call_number;");
 				ResultSet rs = st.executeQuery();
-				if (rs.next())
+				while (rs.next())
 					{
 						model.addRow(new String[]{
 								rs.getString(1), rs.getString(2), rs.getString(3),
-								rs.getString(4) + " " + rs.getString(5), rs.getString(6)});
+								rs.getString(4), rs.getString(5)});
 					}
 			}
         catch(SQLException e)
@@ -221,9 +284,9 @@ class SearchLibrarian extends JDialog
 
 class AddClient extends JDialog
 {
-	Panel button_panel, main_panel, login_panel, provide_panel, confirm_panel;
+	Panel button_panel, main_panel, login_panel, provide_panel, confirm_panel, name_panel, last_name_panel;
 	Label infos, label_login, label_provide, label_confirm;
-	JTextField login_input;
+	JTextField login_input, name_input, last_name_input;
 	JPasswordField provide, confirm;
 	Button add, exit;
 	AddClient()
@@ -241,10 +304,22 @@ class AddClient extends JDialog
 		login_input = new JTextField();
 		login_panel.add(label_login);
 		login_panel.add(login_input);
-		
+
+		name_panel = new Panel();
+		name_panel.setLayout(new BoxLayout(name_panel, BoxLayout.LINE_AXIS));
+		name_panel.add(new Label("Podaj imię"));
+		name_input = new JTextField();
+		name_panel.add(name_input);
+
+		last_name_panel = new Panel();
+		last_name_panel.setLayout(new BoxLayout(last_name_panel, BoxLayout.LINE_AXIS));
+		last_name_panel.add(new Label("Podaj nazwisko"));
+		last_name_input = new JTextField();
+		last_name_panel.add(last_name_input);
+
 		label_provide = new Label("Podaj hasło");
 		provide = new JPasswordField();
-		
+
 		provide_panel = new Panel();
 		provide_panel.setLayout(new BoxLayout(provide_panel, BoxLayout.LINE_AXIS));
 		provide_panel.add(label_provide);
@@ -262,6 +337,8 @@ class AddClient extends JDialog
 		main_panel.add(login_panel);
 		main_panel.add(provide_panel);
 		main_panel.add(confirm_panel);
+		main_panel.add(name_panel);
+		main_panel.add(last_name_panel);
 		
 		add = new Button("Dodaj");
 		exit = new Button("Wyjdź");
@@ -309,38 +386,51 @@ class AddClient extends JDialog
 		login = login_input.getText();
 		password = provide.getText();
 		confirmed = confirm.getText();
+		name = name_input.getText();
+		surname = last_name_input.getText();
 		try
 			{
 				if(
 				   !(login.equals("") || password.equals("") ||
 					 confirmed.equals(""))
-				   )
-					{
-						if(password.equals(confirmed))
-							{
-								PreparedStatement st = DBConnection.get().
-									prepareStatement("INSERT INTO client VALUES (?, ?)");
-								st.setString(1, login);
-								st.setString(2, password);
-								ResultSet rs = st.executeQuery();
-							}
-						else
-							{
-								infos.setText("Hasła się nie zgadzają");
-							}
+				   ) {
+					if (password.equals(confirmed)) {
+						MessageDigest m = MessageDigest.getInstance("MD5");
+
+						m.reset();
+						m.update(password.getBytes());
+						byte[] digest = m.digest();
+						BigInteger bigInt = new BigInteger(1, digest);
+						String hashtext = bigInt.toString(16);
+						while (hashtext.length() < 32) {
+							hashtext = "0" + hashtext;
+						}
+						PreparedStatement st = DBConnection.get().
+								prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, 'Client')");
+						st.setString(1, login);
+						st.setString(4, hashtext);
+						st.setString(3, name);
+						st.setString(2, surname);
+						st.executeUpdate();
+
+					} else {
+						infos.setText("Hasła się nie zgadzają");
 					}
+				}
 				else
 					{
 						infos.setText("Złe dane");
 					}
 			}
-		catch(SQLException e)
+		catch(SQLException | NoSuchAlgorithmException e)
 			{
 				infos.setText("Problem z dodaniem klienta");
 			}
 		login_input.setText("");
 		provide.setText("");
 		confirm.setText("");
+		name_input.setText("");
+		last_name_input.setText("");
 	}
 }
 
@@ -352,6 +442,7 @@ class LibrarianGUI extends JFrame
 	LibrarianGUI()
 	{
 		super("Librarian");
+		DBConnection.init("Librarian", "haslo2");
 
 		main_panel = new Panel();
 		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.PAGE_AXIS));

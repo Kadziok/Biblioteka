@@ -1,3 +1,5 @@
+import com.sun.source.util.SourcePositions;
+
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.JFrame;
@@ -19,11 +21,13 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.ScrollPane;
 import javax.swing.JComboBox;
-import java.sql.ResultSet;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.io.*;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.sql.*;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.RowFilter;
 
 
@@ -34,11 +38,12 @@ class SetAuthor extends JDialog
 	JScrollPane scroll_pane;
 	DefaultTableModel model;
 	Panel main_panel, secondary_panel, input_panel;
-	Button check_out, add_author, remove_author, exit, add_new;
+	Button check_out, add_author, remove_author, exit, refresh;
 	JComboBox id_input;
 	Label id_label, info;
 	SetAuthor(String isbn)
 	{
+		refresh = new Button("Odswież listę");
 		this.isbn = isbn;
 		main_panel = new Panel();
 		main_panel.setLayout(new BorderLayout());
@@ -52,13 +57,12 @@ class SetAuthor extends JDialog
 		secondary_panel = new Panel();
 		secondary_panel.setLayout(new BoxLayout(secondary_panel, BoxLayout.PAGE_AXIS));
 		check_out = new Button("Dodaj do bazy danych");
-		add_new = new Button("Dodaj nowego autora");
 	  	add_author = new Button("Dodaj autora");
 		remove_author = new Button("Usuń autora");
 		exit = new Button("Wyjdź");
 
 		exit.addActionListener(
-							   new ActionListener()
+						       new ActionListener()
 							   {
 								   public void actionPerformed(ActionEvent event)
 								   {
@@ -81,14 +85,6 @@ class SetAuthor extends JDialog
 											 add_author();
 										 }
 									 });
-		add_new.addActionListener(
-								  new ActionListener()
-								  {
-									  public void actionPerformed(ActionEvent event)
-									  {
-										  add_new_author();
-									  }
-								  });
 		check_out.addActionListener(
 									new ActionListener()
 									{
@@ -97,11 +93,19 @@ class SetAuthor extends JDialog
 											check_out();
 										}
 									});
+		refresh.addActionListener(
+				new ActionListener()
+				{
+					public void actionPerformed(ActionEvent event)
+					{
+						load_authors();
+					}
+				});
 
 		secondary_panel.add(input_panel);
 		secondary_panel.add(check_out);
 		secondary_panel.add(add_author);
-		secondary_panel.add(add_new);
+		secondary_panel.add(refresh);
 		secondary_panel.add(remove_author);
 		secondary_panel.add(exit);
 
@@ -127,27 +131,65 @@ class SetAuthor extends JDialog
 
 	void load_authors()
 	{
-		
+		try {
+			PreparedStatement st = DBConnection.get().prepareStatement("SELECT id, name, last_name " +
+					"FROM authors;");
+			ResultSet rs = st.executeQuery();
+
+			id_input.removeAllItems();
+			while (rs.next()) {
+				id_input.addItem(rs.getString(1)+ ". "+ rs.getString(2) +" "+
+						rs.getString(3));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	void check_out()
 	{
-		
-	}
-
-	void add_new_author()
-	{
-		JDialog add_author = new AddAuthor();
+		PreparedStatement st = null;
+		try {
+			DBConnection.get().setAutoCommit(false);
+			for(int i = 0; i < model.getRowCount(); i++) {
+				st = DBConnection.get().
+						prepareStatement("INSERT INTO written_by VALUES (?, ?);");
+				st.setString(1, isbn);
+				st.setInt(2, Integer.parseInt((String)model.getValueAt(i, 0)));
+				st.executeUpdate();
+			}
+			DBConnection.get().commit();
+			dispose();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			try {
+				DBConnection.get().rollback();
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+			}
+		}
 	}
 
 	void add_author()
 	{
-		
+		try {
+			String authors_name = id_input.getSelectedItem().toString();
+			String[] list = authors_name.split("\\.");
+			String author_id = list[0];
+			model.addRow(new String[]{author_id});
+		}
+		catch(Exception e){
+			System.out.println("Errory here");
+			e.printStackTrace();
+		}
 	}
 
 	void remove_author()
 	{
-		
+		if(table.getSelectedRow() >= 0){
+			model.removeRow(table.getSelectedRow());
+		}
 	}
 }
 
@@ -224,7 +266,31 @@ class AddAuthor extends JDialog
 
 	void add_author()
 	{
-		
+		String name, surname;
+		name = name_input.getText();
+		surname = surname_input.getText();
+		try
+		{
+			if(
+					!(name.equals("") || surname.equals(""))
+			) {
+					PreparedStatement st = DBConnection.get().
+							prepareStatement("INSERT INTO authors(name, last_name) VALUES (?, ?)");
+					st.setString(1, name);
+					st.setString(2, surname);
+					st.executeUpdate();
+			}
+			else
+			{
+				infos.setText("Złe dane");
+			}
+		}
+		catch(SQLException e)
+		{
+			infos.setText("Problem z dodaniem klienta");
+		}
+		name_input.setText("");
+		surname_input.setText("");
 	}
 }
 	
@@ -287,6 +353,7 @@ class AddLibrarian extends JDialog
 		main_panel.add(infos);
 		main_panel.add(login_panel);
 		main_panel.add(provide_panel);
+		main_panel.add(confirm_panel);
 		main_panel.add(name_panel);
 		main_panel.add(surname_panel);
 		
@@ -348,13 +415,23 @@ class AddLibrarian extends JDialog
 					{
 						if(password.equals(confirmed))
 							{
+								MessageDigest m = MessageDigest.getInstance("MD5");
+
+								m.reset();
+								m.update(password.getBytes());
+								byte[] digest = m.digest();
+								BigInteger bigInt = new BigInteger(1,digest);
+								String hashtext = bigInt.toString(16);
+								while(hashtext.length() < 32 ){
+									hashtext = "0"+hashtext;
+								}
 								PreparedStatement st = DBConnection.get().
-									prepareStatement("INSERT INTO librarian VALUES (?, ?, ?, ?)");
+									prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, 'Librarian')");
 								st.setString(1, login);
-								st.setString(2, password);
+								st.setString(4, hashtext);
 								st.setString(3, name);
-								st.setString(4, surname);
-								ResultSet rs = st.executeQuery();
+								st.setString(2, surname);
+								st.executeUpdate();
 							}
 						else
 							{
@@ -366,7 +443,7 @@ class AddLibrarian extends JDialog
 						infos.setText("Złe dane");
 					}
 			}
-		catch(SQLException e)
+		catch(SQLException | NoSuchAlgorithmException e)
 			{
 				infos.setText("Problem z dodaniem bibliotekarza");
 			}
@@ -495,23 +572,24 @@ class AddBook extends JDialog
 						PreparedStatement st = DBConnection.get().
 							prepareStatement("INSERT INTO books VALUES (?, ?, ?, ?, ?)");
 						st.setString(1, isbn);
-						st.setString(2, editor);
-						st.setString(3, year);
-						st.setString(4, title);
-						st.setString(5, genre);
-						ResultSet rs = st.executeQuery();
+						st.setString(2, title);
+						st.setString(3, genre);
+						st.setString(4, editor);
+						st.setString(5, year);
+						st.executeUpdate();
+						JDialog set_author = new SetAuthor(isbn);
 					}
 			}
 		catch(SQLException e)
 			{
 				infos.setText("Problem z dodaniem książki do bazy danych");
+				e.printStackTrace();
 			}
 		isbn_input.setText("");
 		editor_input.setText("");
 		year_input.setText("");
 		title_input.setText("");
 		genre_input.setText("");
-		JDialog set_author = new SetAuthor(isbn); 
 	}
 }
 
@@ -571,24 +649,45 @@ class SearchAdmin extends JDialog
 		setSize(800, 600);
 		setResizable(false);
 		setVisible(true);
+
+
+		model.setRowCount(0);
+		try
+		{
+			PreparedStatement st = DBConnection.get().prepareStatement("SELECT books.isbn, title, " +
+					"genre, publisher, year FROM books");
+			ResultSet rs = st.executeQuery();
+			while (rs.next())
+			{
+				model.addRow(new String[]{
+						rs.getString(1), rs.getString(2), rs.getString(3),
+						rs.getString(4), rs.getString(5)});
+			}
+		}
+		catch(SQLException e)
+		{
+			System.out.println("Problemy z załadowaniem książek");
+		}
 	}
 
-	void search()
-	{
-		System.out.println("Tu bedzie search");
+	void search(){
+		TableRowSorter<DefaultTableModel> tr = new TableRowSorter<>(model);
+		table.setRowSorter(tr);
+		tr.setRowFilter(RowFilter.regexFilter(search_input.getText()));
 	}
 }
 
 class AdminGUI extends JFrame
 {
 	Panel main_panel;
-	Button search, add_librarian, add_book, update_reservations, exit;
+	Button search, add_librarian, add_book, update_reservations, exit, add_author, backup, restore;
 
 
 	AdminGUI()
 	{
 		super("Admin");
-
+		DBConnection.init("Admin", "haslo3");
+		add_author = new Button("Dodaj autora");
 		main_panel = new Panel();
 		main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.PAGE_AXIS));
 
@@ -597,7 +696,17 @@ class AdminGUI extends JFrame
 		add_book = new Button("Dodaj książkę");
 		update_reservations = new Button("Zauktualizuj rezerwacje");
 		exit = new Button("Wyjdź");
-		
+		backup = new Button("Zrób backup");
+		restore = new Button("Odtwórz");
+
+		add_author.addActionListener(
+				new ActionListener()
+				{
+					public void actionPerformed(ActionEvent event)
+					{
+						JDialog add_author = new AddAuthor();
+					}
+				});
 		search.addActionListener(
 								 new ActionListener()
 								 {
@@ -606,6 +715,22 @@ class AdminGUI extends JFrame
 										 JDialog search = new SearchAdmin();
 									 }
 								 });
+		backup.addActionListener(
+				new ActionListener()
+				{
+					public void actionPerformed(ActionEvent event)
+					{
+						backup();
+					}
+				});
+		restore.addActionListener(
+				new ActionListener()
+				{
+					public void actionPerformed(ActionEvent event)
+					{
+						restore();
+					}
+				});
 		add_librarian.addActionListener(
 										new ActionListener()
 										{
@@ -643,7 +768,10 @@ class AdminGUI extends JFrame
 		main_panel.add(search);
 		main_panel.add(add_book);
 		main_panel.add(add_librarian);
+		main_panel.add(add_author);
 		main_panel.add(update_reservations);
+		main_panel.add(backup);
+		main_panel.add(restore);
 		main_panel.add(exit);
 		
 		add(main_panel);
@@ -652,13 +780,47 @@ class AdminGUI extends JFrame
         setVisible(true);
 	}
 
+	void backup()
+	{
+		try
+		{
+			Runtime rt = Runtime.getRuntime();
+       		Process p = rt.exec("mysqldump -uroot -pTenebris7 library");
+			InputStream is=p.getInputStream();
+				FileOutputStream fos=new FileOutputStream("mydb_backup.sql");
+			int ch;
+			while((ch=is.read())!=-1) {
+				fos.write(ch);
+			}
+			fos.close();
+			is.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println("Errory here");
+		}
+	}
+
+	void restore()
+	{
+		try
+		{
+			Runtime rt = Runtime.getRuntime();
+			Process p = rt.exec("mysql -uroot -pTenebris7 library < mydb_backup.sql");
+		}
+		catch(Exception e)
+		{
+			System.out.println("Errory here");
+		}
+	}
+
 	void updateReservations()
 	{
 		try
 			{
 				PreparedStatement st = DBConnection.get().
 					prepareStatement(
-									 "DELETE FROM reservations WHERE DATEDIFF(CURDATE(), date) >= 3"
+									 "CALL update_res;"
 									 );
 				ResultSet rs = st.executeQuery();
 			}
